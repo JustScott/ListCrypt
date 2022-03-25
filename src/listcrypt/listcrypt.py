@@ -14,12 +14,8 @@ Functions:
     convert_data(key:str, data:'any data type') -> str and str:
         Converts the data to a string format for encryption
 
-    range_finder(data:str, processes=cpu_count()) -> tuple
-        Finds the closest and furthest out the data ranges depending on each characters integer equivalent.
-    
-        Nested Function:
-            append_character_range(current_segment:int, character_range:list) -> bool            
-                Appends unique characters in the data to the shared 'character_range' list
+    range_finder(data:str or bytes) -> int:
+        Finds the character with the largest integer equivalent in your data        
 
     create_key(key:str, data_length:int) -> bytes
         Uses the sha256 hash of the 'key' parameter to create and concatenate more keys (based upon the origional) to a new
@@ -148,94 +144,33 @@ def convert_data(key:str, data:'any data type') -> str and str:
                     return data, 'ISO-8859-1'
     if type(data) != (str or bytes):
         return str(data), 'ast'
-    
 
-def range_finder(data:str, processes=cpu_count()) -> tuple:
+
+def range_finder(data:str or bytes) -> int:
     '''
-    This function finds the closest and furthest out the data ranges depending on each characters integer equivalent.
+    Finds the character with the largest integer equivalent in your data
 
-    :function:: range_finder(data:str) -> tuple
+    :function:: range_finder(data:str or bytes) -> int
 
     Args:
-        data (str): 
-            The data to be encrypted
-        processes (int, preset:All available CPU cores):
-            The amount of processes allowed to run simultaneously, the more allowed,
-            the faster the decryption
+        data (str or bytes):
+            The data to be used for encryption/decryption
 
     Returns:
-        tuple: The lowest and highest integer in the data given
+        int: The largest integer equivalent character of the data
 
     '''
+    if type(data) == str:
+        data = data.encode()
 
-    #Puts each characters integer equivalent into a list, without repeats for the same characters
-    total_characters = 1114111
+    #Adding 1 to prevent future mathematical errors during decryption
+    max_range = max(data)+1
 
-    #More data then 'total_characters', so it's faster to check if each character is in the data
-    if len(data) > total_characters:
-        #Creates a dictionary that is shared across independent processes 
-        character_range = Manager().list()
+    #Increase to atleast 130 to ensure complexity of encrypted data
+    if max_range < 130:
+        max_range += 130-max_range
 
-        #The amount of cores on your CPU allowed to work simultaneously
-        cores = processes
-    
-        #Divides the 'total_characters' variable into even segments
-        segment_length = round(total_characters/cores)
-        #Finds the exact amount left over from rounding the divison of total characters
-        left_over = (total_characters-segment_length*(cores-1))+1
-    
-
-        def append_character_range(current_segment:int, character_range:list) -> bool:
-            '''
-            Appends unique characters in the data to the shared 'character_range' list
-
-            :function:: append_character_range(current_segment:int, character_range:list) -> bool
-
-            Args:
-                current_segment (int):
-                    The current segment of 'total_characters' that is being checked
-                character_range (list):
-                    Special list created by 'multiprocessing.Manager()' to be shared across
-                    multiple independent processes
-
-            Returns:
-                bool: True if the function runs successfully, otherwise Error
-            '''
-            #Checks wether any characters in the current segment of 'total_characters' are unique to the rest of the data
-            new_range = [item for item in range(current_segment-segment_length,current_segment) if chr(item) in data]
-            #Add them to the 'characte_range' list if they're unique to the data
-            character_range += new_range
-
-            return True
-
-        #Created to hold all the process objects, to check whether they have finished their tasks
-        still_alive = []
-
-        #Starts the multiple process on the 'append_character_range' function, and adds each process object to the still alive list
-        for current_segment in range(segment_length,segment_length*(cores-1),segment_length):
-            p = Process(target=append_character_range, args=(current_segment, character_range))
-            p.start()
-            still_alive.append(p)
-
-        #Runs the first segment on the main process
-        append_character_range(left_over, character_range)
-
-        #Waits until all processes finish their tasks
-        while still_alive:
-            removal = [item for item in still_alive if not item.is_alive()]
-            [still_alive.remove(item) for item in removal]
-
-    #Less data than total printable characters, so its faster to just add all the data to the list
-    else:
-        character_range = [ord(char) for char in data]
-
-    high = max(character_range)
-
-    #Ensures a more secure dataset by spreading out the possible encrypted characters to atleast a range of 100
-    while high < 130:
-        high += 1
-
-    return high+1
+    return max_range
 
 
 def create_key(key:str, data_length:int) -> bytes:
