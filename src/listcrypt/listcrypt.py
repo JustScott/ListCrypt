@@ -5,7 +5,7 @@ converted to a sha256 hash and used to create more key hashes to match and sligh
 
 
 Functions:
-    hash(data: str) -> str:
+    sha256(data: str) -> str:
         Simple hashing function, utilizes the builtin hashlib module
 
     data_verification(key:str, data:str) -> bool:
@@ -58,11 +58,11 @@ import ast
 from multiprocessing import Process, Manager, cpu_count
 import math
 
-def hash(data) -> str:
+def sha256(data) -> str:
     '''
     Returns the Hashed Value of your data
 
-    :function:: hash(data:str) -> str
+    :function:: sha256(data:str) -> str
 
     Args:
         data (str): Any String Value Will Work
@@ -192,14 +192,14 @@ def create_key(key:str, data_length:int) -> bytes:
     '''
 
     new_key = ""
-    length_of_hash = len(hash("x"))
+    length_of_hash = len(sha256("x"))
 
     #The number of iterations required to match the length of 'new_key' and 'data_length'
     required_key_length = math.ceil(data_length/length_of_hash)
 
     #Puts an integer at the end of the origional key and adds the hash of that to the combined 'new_key' variable
     for i in range(required_key_length):
-        new_key += hash(key+str(i))
+        new_key += sha256(key+str(i))
 
     #Encodes the data for easier conversion to each characters integer equivalent during encryption and decryption
     new_key = new_key.encode()
