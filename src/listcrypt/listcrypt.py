@@ -14,9 +14,9 @@ Functions:
     convert_data(key:str, data:'any data type') -> str and str:
         Converts the data to a string format for encryption
 
-    convert_data_back(data: str, origional_data_type: str) -> any:
-        Converts the data back to its origional type as given by the 'origional_data_type' parameter.
-        This is built to work seamlessly with the 'convert_data' function.        
+    convert_data_back(metadata: list) -> any
+        Converts the data back to its origional type as given by the 'origional_data_type' parameter
+        in the 'metadata' list.  This is built to work seamlessly with the 'convert_data' function.
 
     range_finder(data:str or bytes) -> int:
         Finds the character with the largest integer equivalent in your data        
@@ -153,10 +153,10 @@ def convert_data(key:str, data:'any data type') -> str and str:
 
 def convert_data_back(metadata: list) -> any:
     '''
-    Converts the data back to its origional type as given by the 'origional_data_type' parameter.
-    This is built to work seamlessly with the 'convert_data' function.
+    Converts the data back to its origional type as given by the 'origional_data_type' parameter
+    in the 'metadata' list.  This is built to work seamlessly with the 'convert_data' function.
 
-    :function:: convert_data_back(data: str, origional_data_type: str) -> any
+    :function:: convert_data_back(metadata: list) -> any
     
     Args:
         metadata (list):
