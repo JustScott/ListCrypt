@@ -322,7 +322,7 @@ def encrypt(key:'any data type', data:'any data type', processes=cpu_count()) ->
     
     '''
     #ListCrypt currently does not support multiprocessing in windows
-    if platform.system == "Windows":
+    if platform.system() == "Windows":
         processes = 1
 
     #Converts the keys data type to 'str'
@@ -426,7 +426,7 @@ def decrypt(key:"any data type", encrypted_data:bytes, processes=cpu_count()) ->
             
     '''
     #ListCrypt currently does not support multiprocessing in windows
-    if platform.system == "Windows":
+    if platform.system() == "Windows":
         processes = 1
 
     #Converts the keys data type to 'str'
