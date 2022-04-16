@@ -14,6 +14,10 @@ Functions:
     convert_data(key:str, data:'any data type') -> str and str:
         Converts the data to a string format for encryption
 
+    convert_data_back(data: str, origional_data_type: str) -> any:
+        Converts the data back to its origional type as given by the 'origional_data_type' parameter.
+        This is built to work seamlessly with the 'convert_data' function.        
+
     range_finder(data:str or bytes) -> int:
         Finds the character with the largest integer equivalent in your data        
 
@@ -57,6 +61,7 @@ import base64
 import ast
 from multiprocessing import Process, Manager, cpu_count
 import math
+import platform
 
 def sha256(data) -> str:
     '''
@@ -145,6 +150,44 @@ def convert_data(key:str, data:'any data type') -> str and str:
     if type(data) != (str or bytes):
         return str(data), 'ast'
 
+
+def convert_data_back(metadata: list) -> any:
+    '''
+    Converts the data back to its origional type as given by the 'origional_data_type' parameter.
+    This is built to work seamlessly with the 'convert_data' function.
+
+    :function:: convert_data_back(data: str, origional_data_type: str) -> any
+    
+    Args:
+        metadata (list):
+            data (str):
+                This is the data variable returned the 'convert_data' function
+                that will be conerted back to the 'origional_data_type'
+
+            origional_data_type (str):
+                The type returned by the 'convert_data' function, used to return
+                the str 'data' back to its origional type
+
+    Returns:
+        any:
+            The origional data before being ran through any conversion functions
+
+    '''
+    data = metadata[0]
+    origional_data_type = metadata[1]
+
+    #Converting the data back to whatever type is given by the 'origional_data_type' argument
+    if origional_data_type == 'str':
+        return data
+    if origional_data_type == 'utf-8':
+        return data.decode('utf-8')
+    if origional_data_type == 'ast':
+        return ast.literal_eval(data)
+    if origional_data_type == 'base64':
+        return base64.decodebytes(data.encode())
+    if origional_data_type == 'ISO-8859-1':
+        return data.decode('ISO-8859-1')
+    
 
 def range_finder(data:str or bytes) -> int:
     '''
@@ -278,6 +321,10 @@ def encrypt(key:'any data type', data:'any data type', processes=cpu_count()) ->
         bytes: The encrypted data, along with metadata for decrypting the data
     
     '''
+    #ListCrypt currently does not support multiprocessing in windows
+    if platform.system == "Windows":
+        processes = 1
+
     #Converts the keys data type to 'str'
     key = convert_data(key,key)[0]
     
@@ -330,8 +377,10 @@ def encrypt(key:'any data type', data:'any data type', processes=cpu_count()) ->
         Returns:
             bool: True if the function runs successfully, otherwise Error
         '''
+        #Makes data iterable
+        data = data.encode()
         #Encrypts the data
-        encrypted_data = "".join([chr((ord(data[pos])+key[pos])%max_range) for pos in range(len(data))])
+        encrypted_data = "".join([chr((data[pos]+key[pos])%max_range) for pos in range(len(data))])
         #Adds the data to the shared_dictionary
         shared_dictionary[segment] = encrypted_data
 
@@ -376,6 +425,9 @@ def decrypt(key:"any data type", encrypted_data:bytes, processes=cpu_count()) ->
         The origional data
             
     '''
+    #ListCrypt currently does not support multiprocessing in windows
+    if platform.system == "Windows":
+        processes = 1
 
     #Converts the keys data type to 'str'
     key = convert_data(key,key)[0]
@@ -423,9 +475,10 @@ def decrypt(key:"any data type", encrypted_data:bytes, processes=cpu_count()) ->
         Returns:
             bool: True if the function runs successfully, otherwise Error
         '''
-
+        #Makes data iterable
+        data = data.encode()
         #Decrypts the data
-        decrypted_data = "".join([chr((ord(data[pos])-key[pos])%max_range) for pos in range(len(data))])
+        decrypted_data = "".join([chr((data[pos]-key[pos])%max_range) for pos in range(len(data))])
         #Adds the data to the shared_dictionary
         shared_dictionary[segment] = decrypted_data
 
@@ -452,15 +505,8 @@ def decrypt(key:"any data type", encrypted_data:bytes, processes=cpu_count()) ->
         decrypted_data = decrypted_data[len(confirmation_data):]
 
         #Converting data back to origional type
-        if origional_data_type == 'str':
-            return decrypted_data
-        if origional_data_type == 'ast':
-            return ast.literal_eval(decrypted_data)
-        if origional_data_type == 'base64':
-            return base64.decodebytes(decrypted_data.encode())
+        return convert_data_back((decrypted_data, origional_data_type))
 
-        return decrypted_data
-    
     else:
         return False
 
@@ -607,3 +653,4 @@ if __name__=="__main__":
         print(f"Encrypted Data: {e}")
 
         print(f"Decrypted Data: {d}")
+
