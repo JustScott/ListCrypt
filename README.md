@@ -11,7 +11,7 @@ from listcrypt import encrypt,decrypt
 #The key can be any data type
 key = ['testing',123,{'name':'JustScott'}]
 
-#The data can also be any data tyoe
+#The data can also be any data type
 data = (4,{435,123},5)
 
 e = encrypt(key, data)
