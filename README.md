@@ -8,17 +8,25 @@
 ```python
 from listcrypt import encrypt,decrypt
 
-#The key can be any data type
-key = ['testing',123,{'name':'JustScott'}]
+'''
+    The key can be any data type
+    example --> key = ['testing',123,{'name':'JustScott'}]
+'''
+key = "example key"
 
-#The data can also be any data type
-data = (4,{435,123},5)
+'''
+    The data can also be any data type
+    example --> data = (4,{435,123},5)
+'''
+data = "testing 1.. 2.. 3.." 
 
 e = encrypt(key, data)
 
 d = decrypt(key, e)
 
 ```
+<h4>Easily Encrypt and Decrypt Files with the 'file_manager' Function</h4>
+
 ```python
 from listcrypt import file_manager
 
@@ -33,12 +41,13 @@ method = "decrypt"
 
 #Creates 'file.txt' and decrypts the data from 'file' into it
 file_manager(key, file_name, method, encrypted_file_path="file")
-
-
 ```
 
-# Module Documentation
+<br>
+
+# Documentation
 ```python
+'''
 Functions:
     sha256(data: str) -> str:
         Simple hashing function, utilizes the builtin hashlib module
@@ -88,4 +97,5 @@ Functions:
 
     file_manager(key:str, path:str, method:str, encrypted_data=None, encrypted_file_path=None, metadata_removal=True, remove_old_file=True) -> bool or bytes
         Allows for easy encryption and decryption of files
+'''
 ```
