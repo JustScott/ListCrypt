@@ -179,13 +179,13 @@ def convert_data_back(metadata: list) -> any:
     if origional_data_type == 'str':
         return data
     if origional_data_type == 'utf-8':
-        return data.decode('utf-8')
+        return data.encode('utf-8')
     if origional_data_type == 'ast':
         return ast.literal_eval(data)
     if origional_data_type == 'base64':
         return base64.decodebytes(data.encode())
     if origional_data_type == 'ISO-8859-1':
-        return data.decode('ISO-8859-1')
+        return data.encode('ISO-8859-1')
     
 
 def range_finder(data:str or bytes) -> int:
