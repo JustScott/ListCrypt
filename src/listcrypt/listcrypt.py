@@ -97,25 +97,13 @@ def data_verification(key:str, data:str) -> bool:
             it will return False
     '''
 
-    print("---in dv---")
-    print(key)
-    print(data)
-
     #Finds the center of the data and takes the following ten characters to encrypt/decrypt
     size = len(data)/2
     sample_data = data[round(size):round(size+10)]
 
-    print(sample_data)
-    
     encrypted_data = encrypt(key, sample_data)
    
-    print(encrypted_data)
-
     decrypted_data = decrypt(key, encrypted_data)
-
-    print(decrypted_data)
-
-    print("-----------")
 
     #Returns true if the origional chunck of data matches the decrypted version of the data
     return sample_data == decrypted_data
@@ -146,7 +134,6 @@ def convert_data(key:str, data:'any data type') -> str and str:
     if type(data) == bytes:
         try:
             data = data.decode('utf-8')
-            print(data_verification(key, data))
             if data_verification(key, data) and type(data) == str:
                 return data, 'utf-8'
         except Exception:
