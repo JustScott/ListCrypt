@@ -97,13 +97,25 @@ def data_verification(key:str, data:str) -> bool:
             it will return False
     '''
 
+    print("---in dv---")
+    print(key)
+    print(data)
+
     #Finds the center of the data and takes the following ten characters to encrypt/decrypt
     size = len(data)/2
     sample_data = data[round(size):round(size+10)]
 
-    encrypted_data = encrypt(key, sample_data)
+    print(sample_data)
     
+    encrypted_data = encrypt(key, sample_data)
+   
+    print(encrypted_data)
+
     decrypted_data = decrypt(key, encrypted_data)
+
+    print(decrypted_data)
+
+    print("-----------")
 
     #Returns true if the origional chunck of data matches the decrypted version of the data
     return sample_data == decrypted_data
@@ -128,13 +140,13 @@ def convert_data(key:str, data:'any data type') -> str and str:
         str:
             The origional format of the converted data
     '''
-
     #This block of code converts the data to a str, no matter the origional type
     if type(data) == str:
         return data, 'str'
     if type(data) == bytes:
         try:
             data = data.decode('utf-8')
+            print(data_verification(key, data))
             if data_verification(key, data) and type(data) == str:
                 return data, 'utf-8'
         except Exception:
@@ -386,17 +398,22 @@ def encrypt(key:'any data type', data:'any data type', processes=cpu_count()) ->
 
         return True
 
+    still_alive = []
+
     if segments > 1:
         #Starting multiple process for the 'multiprocess_encryption' function
         for data_segment,key_segment,process in zip(child_segmented_data, child_segmented_key, range(1,segments)):
-            Process(target=multiprocess_encryption, args=(key_segment, data_segment, process, shared_dictionary)).start()
+            p = Process(target=multiprocess_encryption, args=(key_segment, data_segment, process, shared_dictionary))
+            p.start()
+            still_alive.append(p)
 
     #Encrypts the first segment of data with the main process
     multiprocess_encryption(segmented_key[:1][0], segmented_data[:1][0], 0, shared_dictionary)
 
     #Waits until all processes have finished and terminated
-    while len(shared_dictionary) != segments:
-        continue
+    while still_alive:
+        removal = [item for item in still_alive if not item.is_alive()]
+        [still_alive.remove(item) for item in removal]
 
     #Adds the metadata to the start of the data
     encrypted_data = "".join([shared_dictionary[count] for count in range(segments)])
@@ -475,28 +492,32 @@ def decrypt(key:"any data type", encrypted_data:bytes, processes=cpu_count()) ->
         Returns:
             bool: True if the function runs successfully, otherwise Error
         '''
-        #Makes data iterable
-        data = data.encode()
         #Decrypts the data
-        decrypted_data = "".join([chr((data[pos]-key[pos])%max_range) for pos in range(len(data))])
+        decrypted_data = "".join([chr((ord(data[pos])-key[pos])%max_range) for pos in range(len(data))])
         #Adds the data to the shared_dictionary
         shared_dictionary[segment] = decrypted_data
+
+    still_alive = []
 
     if segments > 1:
         #Starting multiple process for the 'multiprocess_decryption' function
         for data_segment,key_segment,process in zip(child_segmented_data, child_segmented_key, range(1,segments)):
-            Process(target=multiprocess_decryption, args=(key_segment, data_segment, process, shared_dictionary)).start()
+            p = Process(target=multiprocess_decryption, args=(key_segment, data_segment, process, shared_dictionary))
+            p.start()
+            still_alive.append(p)
+
 
     #Encrypts the first segment of data with the main process
     multiprocess_decryption(segmented_key[:1][0], segmented_data[:1][0], 0, shared_dictionary)
-    
+
     #Waits until all processes have finished and terminated
-    while len(shared_dictionary) != segments:
-        continue
-   
+    while still_alive:
+        removal = [item for item in still_alive if not item.is_alive()]
+        [still_alive.remove(item) for item in removal]
+
     #Concatenating the data from the shared dictionary, into one string
     decrypted_data = "".join([shared_dictionary[count] for count in range(segments)])
-  
+ 
     #Pulls confirmation text from data to verify successful decryption
     pulled_confirmation = decrypted_data[:len(confirmation_data)]
 
