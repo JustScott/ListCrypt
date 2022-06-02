@@ -63,7 +63,7 @@ from multiprocessing import Process, Manager, cpu_count
 import math
 import platform
 
-def sha256(data) -> str:
+def sha256(data:str) -> str:
     '''
     Returns the Hashed Value of your data
 
