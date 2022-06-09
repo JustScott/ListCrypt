@@ -51,8 +51,16 @@ Functions:
                 with the keys being the segments origional position for concatenation
                 after decryption
 
-    file_manager(key:str, path:str, method:str, encrypted_data=None, encrypted_file_path=None, metadata_removal=True, remove_old_file=True) -> bool or bytes
-        Allows for easy encryption and decryption of files
+    remove_image_exif(path:str) -> bool
+        Removes the metadata from the provided image, which may cause
+        unwanted effects like image rotating, but will reduce the file size greatly
+
+    encrypt_file(key:str, path:str, metadata_removal=True) -> bool
+        This function enables the easy encryption of files
+
+
+    decrypt_file(key:str, path:str) -> bool
+        This function enables the easy decryption of files
 '''
 
 
@@ -537,136 +545,128 @@ def decrypt(key:"any data type", encrypted_data:bytes, processes=cpu_count()) ->
     else:
         return False
 
-
-def file_manager(key:str, path:str, method:str, encrypted_data=None, encrypted_file_path=None, metadata_removal=True, remove_old_file=True) -> bool or bytes:
+def remove_image_exif(path:str) -> bool:
     '''
-    This function allows for easy encryption and decryption of files
-
-    :function:: file_manager(key:str, path:str, method:str, encrypted_data=None, encrypted_file_path=None, metadata_removal=True, remove_old_file=True) -> bool or bytes
+    Removes the metadata from the provided image, which may cause
+    unwanted effects like image rotating, but will reduce the file size greatly
+    
+    :function:: remove_image_exif(path:str) -> bool
 
     Args:
-        key (str):
-            The key used for the encryption and decryption of the file
-
         path (str):
-            The path to the file is to be encrypted when using the encryption method, the path to the
-            new location of the decrypted file when using the decryption method
-
-        method (str):
-            Can either be in 'encryption' or 'decryption' mode
-
-        encrypted_data (bytes, *optional):
-            Use this option when you encrypted a file and stored it in a database instead of
-            just in a path on your machine
-
-        encrypted_file_path (str, *optional):
-            In encryption mode, specifiy the path to which
-            you want to the encrypted file to be stored, if this argument is not used in encryption
-            mode, the data will be returned by the function. In 'decryption' mode, the path to the
-            already encrypted file path should be specified, to allow the program to open and read
-            said file
-
-        metadata_removal (bool, preset:'True'):
-            Removes metadata from image files to reduce the size of the file, this doesn't affect
-            the quality of the image
-
-        remove_old_file (bool, preset:'True'):
-            When set to True, this will delete either the old decrypted file after it decrypts successfully,
-            or the origional file after it encrypts successfully. This isn't necessary if you use the same
-            path and file name for both 'path' and 'encrypted_file_path'
+            Path to the image
 
     Returns:
         bool:
-            This is returned by the 'decryption' method if the file or data is decrypted successfully
-            and it is written to a new file path
-
-        bytes:
-            Returned by the 'encryption' method when an encrypted file path is not specified.
-            This is the encrypted version of the file specified in the 'path' argument
-
-
+            True if the image's exif data is removed successfully, will return
+            False if the process fails, or the image has no exif data
     '''
-    method = method.lower()
-
-    if method == "encryption" or method == "e":
-        #Attempts to remove meta data from images to reduce storage size
-        if metadata_removal:
-            try:
-                from PIL import Image
-                image = Image.open(path)
-                data = list(image.getdata())
-                image_without_exif = Image.new(image.mode, image.size)
-                image_without_exif.putdata(data)
-                image_without_exif.save(path)
-            except:
-                pass
-
-        # Allows for opening both string and byte files without issue
-        try:
-            with open(path, "r")as file:
-                encrypted_file = file.read()
-        except:
-            with open(path, "rb")as file:
-                encrypted_file = file.read()
-
-        encrypted_data = encrypt(key, encrypted_file)
-
-        # Returns the encrypted data if a file path is not supplied
-        if encrypted_file_path:
-            with open(encrypted_file_path, "wb")as f:
-                f.write(encrypted_data)
-
-            #Removes origional file
-            if remove_old_file and path != encrypted_file_path:
-                import os
-                try:
-                    os.remove(path)
-                except Exception:
-                    print(f"Failed to remove path: '{path}'")
-            return True
-        else:
-            return encrypted_data
-
-    if method == "decryption" or method == "d":
-        if encrypted_file_path and not encrypted_data:
-            with open(encrypted_file_path, "rb")as file:
-                encrypted_data = file.read()
-        else:
-            raise TypeError("Missing required argument 'encrypted_file_path' or 'encrypted_data'")
-
-        decrypted_data = decrypt(key, encrypted_data)
-
-        #Returns False if decryption process fails
-        if not decrypted_data:
-            return False
-
-        # Allows for opening both string and byte files without issue
-        if type(decrypted_data) == str:
-            with open(path, "w")as file:
-                file.write(decrypted_data)
-        if type(decrypted_data) == bytes:
-            with open(path, "wb")as file:
-                file.write(decrypted_data)
-
-        #Removes encrypted file
-        if remove_old_file and path != encrypted_file_path:
-            import os
-            try:
-                os.remove(encrypted_file_path)
-            except Exception:
-                print(f"Failed to remove path: '{encrypted_file_path}'")
+    try:
+        from PIL import Image
+        image = Image.open(path)
+        data = list(image.getdata())
+        image_without_exif = Image.new(image.mode, image.size)
+        image_without_exif.putdata(data)
+        image_without_exif.save(path)
 
         return True
+    except Exception:
+        return False
+
+
+def encrypt_file(key:any, path:str, metadata_removal=True) -> bool:
+    '''
+    This function enables the easy encryption of files
+
+    :function:: encrypt_file(key:str, path:str, metadata_removal=True) -> bool
+
+    Args:
+        key (any):
+            The key used to encrypt the file, can be any data type
+            
+        path (str):
+            The location of your file in your filesystem
+
+        metadata_removal (bool, *optional):
+            Removes any exif data from your images, 
+            which may cause side effects like image rotating
+    
+    Returns:
+        bool:
+            True if the file is encrypted successfully
+
+    '''
+    #Attempts to remove meta data from images to reduce storage size
+    if metadata_removal:
+        remove_image_exif(path)
+    # Allows for opening both string and byte files without issue
+    try:
+        with open(path, "r")as file:
+            encrypted_file_data = file.read()
+    except:
+        with open(path, "rb")as file:
+            encrypted_file_data = file.read()
+
+    encrypted_data = encrypt(key, encrypted_file_data)
+
+    with open(path, 'wb')as f:
+        f.write(encrypted_data)
+
+    return True
+
+
+def decrypt_file(key:any, path:str) -> bool:
+    '''
+    This function enables the easy decryption of files
+    
+    :function:: decrypt_file(key:str, path:str) -> bool
+
+    Args:
+        key (any):
+            The key used to decrypt the file, can be any data type
+            
+        path (str):
+            The location of your file in your filesystem
+    
+    Returns:
+        bool:
+            True if the file is decrypted successfully
+
+    '''
+    try:
+        with open(path, "rb")as file:
+            encrypted_data = file.read()
+    except Exception:
+        raise NameError('Incorrect File Path')
+
+    decrypted_data = decrypt(key, encrypted_data)
+
+    #Returns False if decryption process fails
+    if not decrypted_data:
+        return False
+
+    # Allows for opening both string and byte files without issue
+    if type(decrypted_data) == str:
+        with open(path, "w")as file:
+            file.write(decrypted_data)
+    if type(decrypted_data) == bytes:
+        with open(path, "wb")as file:
+            file.write(decrypted_data)
+    
+    return True
 
 
 if __name__=="__main__":
-    #Example use of the 'file_manager()' function
-    if False:
-        file_name = "file.txt"
+    #Example use of the 'encrypt_file()' and 'decrypt_file()' functions
+    if True:
+        file_path = "file.txt"
         key = "example key"
-        method = "encrypt"
 
-        file_manager(key, file_name, method, encrypted_file_path="file")
+        #Encrypts the data from the file, back into the file
+        encrypt_file(key, file_path)
+    
+        #Decrypts the data from the file, back into the file
+        decrypt_file(key, file_path)
 
     #Example use of the 'encrypt()' and 'decrypt()' functions
     if False:

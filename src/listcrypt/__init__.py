@@ -51,8 +51,16 @@ Functions:
                 with the keys being the segments origional position for concatenation
                 after decryption
 
-    file_manager(key:str, path:str, method:str, encrypted_data=None, encrypted_file_path=None, metadata_removal=True, remove_old_file=True) -> bool or bytes
-        Allows for easy encryption and decryption of files
+    remove_image_exif(path:str) -> bool
+        Removes the metadata from the provided image, which may cause
+        unwanted effects like image rotating, but will reduce the file size greatly
+
+    encrypt_file(key:str, path:str, metadata_removal=True) -> bool
+        This function enables the easy encryption of files
+
+
+    decrypt_file(key:str, path:str) -> bool
+        This function enables the easy decryption of files
 '''
 
 from listcrypt.listcrypt import *

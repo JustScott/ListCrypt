@@ -1,46 +1,38 @@
 # <p align='center'>ListCrypt</p>
-<h3 align='center'> Symmetric cryptographic algorithm built entirely with python3 </h3>
+<h3 align='center'> Symmetric cryptographic algorithm built in python3.8 </h3>
 
 <br>
 <br>
 
 # Example Use
 ```python
-from listcrypt import encrypt,decrypt
-
-'''
-    The key can be any data type
-    example --> key = ['testing',123,{'name':'JustScott'}]
-'''
-key = "example key"
-
-'''
-    The data can also be any data type
-    example --> data = (4,{435,123},5)
-'''
-data = "testing 1.. 2.. 3.." 
-
-e = encrypt(key, data)
-
-d = decrypt(key, e)
+>>> from listcrypt import encrypt,decrypt
+>>>
+>>> key = "example key"
+>>> data = "testing 1.. 2.. 3.." 
+>>>
+>>> e = encrypt(key, data)
+>>> print(e)
+b'AV#\x18t*\x12\x1c@\x01\x1b%U4k>M*w z\x7f\x17]afh\x07 \x04'
+>>>
+>>> d = decrypt(key, e)
+>>> print(d)
+testing 1.. 2.. 3..
 
 ```
-<h4>Easily Encrypt and Decrypt Files with the 'file_manager' Function</h4>
+<h4>Easily Encrypt and Decrypt Files with the 'encrypt_file' and 'decrypt_file' Functions</h4>
 
 ```python
-from listcrypt import file_manager
+>>> from listcrypt import encrypt_file, decrypt_file
+>>>
+>>> file_name = "file.txt"
+>>> key = "example key"
+>>>
+>>> encrypt_file(key, path)
+True
+>>> decrypt_file(key, path)
+True
 
-file_name = "file.txt"
-key = "example key"
-method = "encrypt"
-
-#Creates a new encrypted bytes file named 'file' in your current directory, and deletes the old file
-file_manager(key, file_name, method, encrypted_file_path="file")
-
-method = "decrypt"
-
-#Creates 'file.txt' and decrypts the data from 'file' into it
-file_manager(key, file_name, method, encrypted_file_path="file")
 ```
 
 <br>
@@ -95,7 +87,15 @@ Functions:
                 with the keys being the segments origional position for concatenation
                 after decryption
 
-    file_manager(key:str, path:str, method:str, encrypted_data=None, encrypted_file_path=None, metadata_removal=True, remove_old_file=True) -> bool or bytes
-        Allows for easy encryption and decryption of files
+	remove_image_exif(path:str) -> bool
+        Removes the metadata from the provided image, which may cause
+        unwanted effects like image rotating, but will reduce the file size greatly
+
+    encrypt_file(key:str, path:str, metadata_removal=True) -> bool
+        This function enables the easy encryption of files
+
+
+    decrypt_file(key:str, path:str) -> bool
+        This function enables the easy decryption of files
 '''
 ```
