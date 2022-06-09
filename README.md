@@ -87,7 +87,7 @@ Functions:
                 with the keys being the segments origional position for concatenation
                 after decryption
 
-	remove_image_exif(path:str) -> bool
+    remove_image_exif(path:str) -> bool
         Removes the metadata from the provided image, which may cause
         unwanted effects like image rotating, but will reduce the file size greatly
 
