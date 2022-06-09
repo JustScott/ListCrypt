@@ -28,7 +28,7 @@ Functions:
     segment_data(data:str, segments:int) -> list
         Splits the data evenly amongst the amount of 'segments' required
 
-    pull_metadata(data:bytes) -> dict
+    pull_metadata(key:str, data:bytes) -> dict
         Pulls metadata from the encrypted bytes and puts it in a dictionary for easy readibility
 
     encrypt(key:'any data type', data:'any data type', processes=cpu_count()) -> bytes
