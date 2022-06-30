@@ -275,6 +275,7 @@ def segment_data(data:str, segments:int) -> list:
     Returns:
         list: A list of evenly distributed items from the data
     '''
+
     #Finds the approximate len each segment should be 
     segment_lengths = math.ceil(len(data)/segments)
 
@@ -309,14 +310,12 @@ def pull_metadata(key:bytes, data:bytes) -> dict:
     metadata = "".join([chr_((ord_(metadata[pos])-ord_(key[pos]))%130) for pos in range(len(metadata))])
 
     #Divides the metadata
-    metadata_dictionary["type"] = metadata[:metadata.index("(")]
-    metadata = metadata[metadata.index("(")+1:]
+    metadata_dictionary["type"] = metadata.split('(')[0]
 
-    metadata_dictionary["range"] = ast.literal_eval(metadata[:metadata.index(")")])
-    metadata = metadata[metadata.index(")")+1:]
+    metadata_dictionary["range"] = int(metadata.split('(')[1].replace(')',''))
 
     metadata_dictionary["data"] = data
-
+    
     return metadata_dictionary
 
 
@@ -341,12 +340,12 @@ def encrypt(key:'any data type', data:'any data type', processes=cpu_count()) ->
     
     '''
     #ListCrypt currently does not support multiprocessing in windows
-    if platform.system() == "Windows":
+    if platform.system() != "Linux":
         processes = 1
 
     #Converts the keys data type to 'str'
     key = convert_data(key,key)[0]
-    
+
     #Finds the origional type of the data for converting back to after decryption
     data,data_type = convert_data(key, data)
     metadata = data_type
@@ -359,6 +358,7 @@ def encrypt(key:'any data type', data:'any data type', processes=cpu_count()) ->
     max_range = range_finder(data)
     metadata += f"({max_range})"
 
+    metadata_key = key
     #Creates a new, longer key from the origional 'key' variable to match or exceed the length of the data
     key = create_key(key, len(data))
 
@@ -420,6 +420,7 @@ def encrypt(key:'any data type', data:'any data type', processes=cpu_count()) ->
         [still_alive.remove(item) for item in removal]
 
     #Encrypt the metadata
+    key = sha256(metadata_key)
     encrypted_metadata = "".join([chr_((ord_(metadata[pos])+ord_(key[pos]))%130) for pos in range(len(metadata))])
 
     #Adds the metadata to the start of the data
@@ -450,21 +451,21 @@ def decrypt(key:"any data type", encrypted_data:bytes, processes=cpu_count()) ->
             
     '''
     #ListCrypt currently does not support multiprocessing in windows
-    if platform.system() == "Windows":
+    if platform.system() != "Linux":
         processes = 1
 
     #Converts the keys data type to 'str'
     key = convert_data(key,key)[0]
-
-    #Creates a new, longer key from the origional 'key' variable to match or exceed the length of the data
-    key = create_key(key, len(encrypted_data))
     
     #Converts the metadata to variables for easy usability
     confirmation_data = "39"
-    metadata_dictionary = pull_metadata(key, encrypted_data)
+    metadata_dictionary = pull_metadata(sha256(key), encrypted_data)
     origional_data_type = metadata_dictionary["type"]
     max_range = metadata_dictionary["range"]
     data = metadata_dictionary["data"]
+
+    #Creates a new, longer key from the origional 'key' variable to match or exceed the length of the data
+    key = create_key(key, len(data))
 
     #Creates a dictionary that is shared across independent processes
     shared_dictionary = Manager().dict()
@@ -524,7 +525,7 @@ def decrypt(key:"any data type", encrypted_data:bytes, processes=cpu_count()) ->
 
     #Concatenating the data from the shared dictionary, into one string
     decrypted_data = "".join([shared_dictionary[count] for count in range(segments)])
- 
+
     #Pulls confirmation text from data to verify successful decryption
     pulled_confirmation = decrypted_data[:len(confirmation_data)]
 
