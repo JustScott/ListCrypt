@@ -71,6 +71,12 @@ from multiprocessing import Process, Manager, cpu_count
 import math
 import platform
 
+
+#Defining functions before iterative use to increase efficiency
+chr_ = chr
+ord_ = ord
+
+
 def sha256(data:str) -> str:
     '''
     Returns the Hashed Value of your data
@@ -251,9 +257,6 @@ def create_key(key:str, data_length:int) -> bytes:
     for i in range(required_key_length):
         new_key += sha256(key+str(i))
 
-    #Encodes the data for easier conversion to each characters integer equivalent during encryption and decryption
-    new_key = new_key.encode()
-
     return new_key
 
 
@@ -298,12 +301,12 @@ def pull_metadata(key:bytes, data:bytes) -> dict:
     '''
     metadata_dictionary = {}
 
-    split_data = data.split(b'@')
-    metadata = split_data[0]
-    data = split_data[1]
+    split_data = data.split(b'@1,')
+    metadata = split_data[0].decode()
+    data = split_data[1].decode()
 
     #Decrypt metadata
-    metadata = "".join([chr((metadata[pos]-key[pos])%130) for pos in range(len(metadata))])
+    metadata = "".join([chr_((ord_(metadata[pos])-ord_(key[pos]))%130) for pos in range(len(metadata))])
 
     #Divides the metadata
     metadata_dictionary["type"] = metadata[:metadata.index("(")]
@@ -371,9 +374,6 @@ def encrypt(key:'any data type', data:'any data type', processes=cpu_count()) ->
     child_segmented_data = segmented_data[1:]
     child_segmented_key = segmented_key[1:]
 
-    #Defining functions before loop to increase speed
-    chr_ = chr
-    
     def multiprocess_encryption(key:str, data:str, segment:int, shared_dictionary:dict) -> bool:
         '''
         Takes chuncks of data and adds them to a shared dictionary,
@@ -395,10 +395,8 @@ def encrypt(key:'any data type', data:'any data type', processes=cpu_count()) ->
         Returns:
             bool: True if the function runs successfully, otherwise Error
         '''
-        #Makes data iterable
-        data = data.encode()
         #Encrypts the data
-        encrypted_data = "".join([chr_((data[pos]+key[pos])%max_range) for pos in range(len(data))])
+        encrypted_data = "".join([chr_((ord_(data[pos])+ord_(key[pos]))%max_range) for pos in range(len(data))])
         #Adds the data to the shared_dictionary
         shared_dictionary[segment] = encrypted_data
 
@@ -422,13 +420,11 @@ def encrypt(key:'any data type', data:'any data type', processes=cpu_count()) ->
         [still_alive.remove(item) for item in removal]
 
     #Encrypt the metadata
-    data = metadata.encode()
-    encrypted_metadata = "".join([chr_((data[pos]+key[pos])%130) for pos in range(len(data))])
-
+    encrypted_metadata = "".join([chr_((ord_(metadata[pos])+ord_(key[pos]))%130) for pos in range(len(metadata))])
 
     #Adds the metadata to the start of the data
     encrypted_data = "".join([shared_dictionary[count] for count in range(segments)])
-    encrypted_data = encrypted_metadata + '@' + encrypted_data
+    encrypted_data = encrypted_metadata + '@1,' + encrypted_data
 
     return encrypted_data.encode()
 
@@ -482,9 +478,6 @@ def decrypt(key:"any data type", encrypted_data:bytes, processes=cpu_count()) ->
     child_segmented_data = segmented_data[1:]
     child_segmented_key = segmented_key[1:]
 
-    #Defining functions before loop to increase speed
-    chr_ = chr
-
     def multiprocess_decryption(key, data:str, segment:int, shared_dictionary:dict) -> bool:
         '''
         Takes chuncks of data from each process and adds them to a shared dictionary,
@@ -507,7 +500,7 @@ def decrypt(key:"any data type", encrypted_data:bytes, processes=cpu_count()) ->
             bool: True if the function runs successfully, otherwise Error
         '''
         #Decrypts the data
-        decrypted_data = "".join([chr_((data[pos]-key[pos])%max_range) for pos in range(len(data))])
+        decrypted_data = "".join([chr_((ord_(data[pos])-ord_(key[pos]))%max_range) for pos in range(len(data))])
         #Adds the data to the shared_dictionary
         shared_dictionary[segment] = decrypted_data
 
