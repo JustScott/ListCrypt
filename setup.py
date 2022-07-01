@@ -3,7 +3,7 @@ from setuptools import setup
 with open("README.md", "r") as file:
     long_description = file.read()
 
-VERSION = '0.2.2'
+VERSION = '0.2.3'
 DESCRIPTION = 'Symmetric cryptography module'
 
 # Setting up

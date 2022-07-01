@@ -302,12 +302,19 @@ def pull_metadata(key:bytes, data:bytes) -> dict:
     '''
     metadata_dictionary = {}
 
-    split_data = data.split(b'@1,')
-    metadata = split_data[0].decode()
-    data = split_data[1].decode()
+    #Getting the metadata location information
+    position = sum(map(ord,key))%len(data)
+    splitter_chars = key[2:12].encode()
+
+    #Splitting the metadata from the regular data
+    metadata = data[position:data.index(splitter_chars)]
+    data = data.replace(metadata+splitter_chars, b'').decode()
+    
+    metadata = metadata.decode()
 
     #Decrypt metadata
     metadata = "".join([chr_((ord_(metadata[pos])-ord_(key[pos]))%130) for pos in range(len(metadata))])
+
 
     #Divides the metadata
     metadata_dictionary["type"] = metadata.split('(')[0]
@@ -370,6 +377,9 @@ def encrypt(key:'any data type', data:'any data type', processes=cpu_count()) ->
     segmented_data = segment_data(data, segments)
     segmented_key = segment_data(key, segments)
 
+    #Cleaning up memory
+    data=None
+
     #Leaving out the first segment for the main process to run after it starts the child processes
     child_segmented_data = segmented_data[1:]
     child_segmented_key = segmented_key[1:]
@@ -425,7 +435,17 @@ def encrypt(key:'any data type', data:'any data type', processes=cpu_count()) ->
 
     #Adds the metadata to the start of the data
     encrypted_data = "".join([shared_dictionary[count] for count in range(segments)])
-    encrypted_data = encrypted_metadata + '@1,' + encrypted_data
+    shared_dictionary = None;
+
+    #Creating a seemingly random position to place the metadata in the data
+    key = sha256(metadata_key)
+    splitter_chars = key[2:12]
+    position = sum(map(ord,key))%(len(encrypted_data)+len(splitter_chars)+len(encrypted_metadata))
+
+    #Join the metadata with the regular data
+    index_data = encrypted_data[position:position+100]
+    encrypted_data = encrypted_data.split(index_data)
+    encrypted_data = encrypted_data[0]+encrypted_metadata+splitter_chars+index_data+encrypted_data[1]
 
     return encrypted_data.encode()
 
