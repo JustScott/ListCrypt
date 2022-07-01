@@ -301,20 +301,18 @@ def pull_metadata(key:bytes, data:bytes) -> dict:
         dict: A dictionary of the metadata and encrypted data
     '''
     metadata_dictionary = {}
+    data = data.decode()
 
     #Getting the metadata location information
     position = sum(map(ord,key))%len(data)
-    splitter_chars = key[2:12].encode()
+    splitter_chars = key[2:12]
 
     #Splitting the metadata from the regular data
     metadata = data[position:data.index(splitter_chars)]
-    data = data.replace(metadata+splitter_chars, b'').decode()
-    
-    metadata = metadata.decode()
+    data = data.replace(metadata+splitter_chars, '')
 
     #Decrypt metadata
     metadata = "".join([chr_((ord_(metadata[pos])-ord_(key[pos]))%130) for pos in range(len(metadata))])
-
 
     #Divides the metadata
     metadata_dictionary["type"] = metadata.split('(')[0]
