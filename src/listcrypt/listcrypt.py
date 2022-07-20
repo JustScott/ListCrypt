@@ -349,7 +349,7 @@ def encrypt(key:'any data type', data:'any data type', processes=cpu_count()) ->
         processes = 1
 
     #Converts the keys data type to 'str'
-    key = convert_data(key,key)[0]
+    key = str(key)
 
     #Finds the origional type of the data for converting back to after decryption
     data,data_type = convert_data(key, data)
@@ -473,7 +473,7 @@ def decrypt(key:"any data type", encrypted_data:bytes, processes=cpu_count()) ->
         processes = 1
 
     #Converts the keys data type to 'str'
-    key = convert_data(key,key)[0]
+    key = str(key)
     
     #Converts the metadata to variables for easy usability
     confirmation_data = "39"
