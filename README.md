@@ -1,5 +1,6 @@
 # <p align='center'>ListCrypt</p>
 <h3 align='center'> Symmetric cryptographic algorithm built in python3.8 </h3>
+<h4 align='center'> ( ListCrypt is NOT intended for production use ) </h4>
 
 <br>
 <br>
