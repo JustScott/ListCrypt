@@ -208,12 +208,12 @@ def create_key(key:str, data_length:int) -> bytes:
     return new_key
 
 
-def segment_data(data:str, segments:int) -> list:
+def segment_data(data:'iterable', segments:int) -> list:
     '''
     Splits the data evenly amongst the amount of 'segments' required
 
     Args:
-        data (str):
+        data (any iterable):
             The data to evenly split
         segments (int):
             The amount of splits you want in the data
@@ -222,13 +222,31 @@ def segment_data(data:str, segments:int) -> list:
         list: A list of evenly distributed items from the data
     '''
 
-    # Finds the approximate len each segment should be 
-    segment_lengths = math.ceil(len(data)/segments)
+    # The number of items per segment, if all segments were even
+    segment_length_estimate = 1
+    data_length_adjustment = 0
+    if len(data) > segments:
+        segment_length_estimate = int(len(data)/segments)
+        data_length_adjustment = -1
 
-    # Splits the data into segments
-    segmented_data = [data[size:size+segment_lengths] for size in range(0,segment_lengths*segments,segment_lengths)]
+    # The remaining items after the segments are all equal in length
+    remaining_data_length = 0
+    if len(data) > segments:
+        remaining_data_length = len(data)%segments
 
-    return segmented_data
+
+    # Get all evenly distributed segments
+    segmented_data = [
+        data[position:position+segment_length_estimate]
+        for position in range(0, len(data)+data_length_adjustment, segment_length_estimate)
+    ]
+
+    # Append each remainder to an individual segment, until out
+    for position in range(1, remaining_data_length+1):
+        segmented_data[position-1].append(data[-position])
+
+    # Eliminite any empty segments
+    return list(filter(None, segmented_data))
 
 
 def pull_metadata(key:str, data:bytes) -> dict:
