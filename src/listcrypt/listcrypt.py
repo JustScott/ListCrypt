@@ -219,21 +219,20 @@ def segment_data(data:'iterable', segments:int) -> list:
             The amount of splits you want in the data
 
     Returns:
-        list: A list of evenly distributed items from the data
+        list: 
+            A list of evenly distributed items from the data
     '''
 
     # The number of items per segment, if all segments were even
     segment_length_estimate = 1
     data_length_adjustment = 0
+    remaining_data_length = 0
     if len(data) > segments:
         segment_length_estimate = int(len(data)/segments)
         data_length_adjustment = -1
 
-    # The remaining items after the segments are all equal in length
-    remaining_data_length = 0
-    if len(data) > segments:
+        # The remaining items after the segments are all equal in length
         remaining_data_length = len(data)%segments
-
 
     # Get all evenly distributed segments
     segmented_data = [
@@ -241,9 +240,20 @@ def segment_data(data:'iterable', segments:int) -> list:
         for position in range(0, len(data)+data_length_adjustment, segment_length_estimate)
     ]
 
-    # Append each remainder to an individual segment, until out
-    for position in range(1, remaining_data_length+1):
-        segmented_data[position-1].append(data[-position])
+    # While there are more segments than specified
+    while len(segmented_data) > segments:
+        # Remove & return the extra segment
+        extra_segment = segmented_data.pop()
+        # While there are items in the extra segment
+        while len(extra_segment):
+            # Loop through each prior segment, and move a single item from the
+            # extra segment onto the segments until the extra_segment is empty
+            for position in range(0, len(segmented_data)-1):
+                # If the extra segment runs out before the loop ends
+                if not len(extra_segment):
+                    break
+                extra_segment_item = extra_segment.pop()
+                segmented_data[position].append(extra_segment_item)
 
     # Eliminite any empty segments
     return list(filter(None, segmented_data))
